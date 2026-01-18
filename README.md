@@ -1,86 +1,119 @@
-# GitHub User Activity
+# GitHub User Activity CLI
+
+A simple **Command Line Interface (CLI)** application that fetches and displays a GitHub user’s recent public activity using the **GitHub API**.
+
+This project is designed to strengthen your understanding of:
+
+- Working with public APIs
+- Parsing JSON responses
+- Building CLI tools
+- Handling errors gracefully
+
+Project reference:  
+https://roadmap.sh/projects/github-user-activity
+
+---
 
 ## 📌 Project Overview
 
-Build a simple **Command Line Interface (CLI)** that uses the **GitHub API** to fetch and display a user’s recent public activity directly in the terminal. This project is designed to help you practice working with APIs, JSON data, and CLI application development. :contentReference[oaicite:0]{index=0}
+The GitHub User Activity CLI allows you to retrieve and display a user’s **recent public GitHub activity** directly in your terminal by providing a GitHub username.
+
+The application communicates with GitHub’s public REST API and presents the activity in a **human-readable format**, without relying on external API libraries.
 
 ---
 
 ## 🎯 Requirements
 
-Your CLI should:
+Your CLI **must**:
 
-- Run from the terminal and accept a GitHub username as an argument.
-- Fetch the user’s recent activity using the GitHub API.
-- Display the activity in a human-readable format in the terminal.
-- Handle errors gracefully (e.g., invalid username, API failures).
-- Be implemented in any language of your choice.
-- **Do not use external libraries/frameworks for the GitHub API fetch.** :contentReference[oaicite:1]{index=1}
+- Run from the terminal
+- Accept a GitHub username as a command-line argument
+- Fetch recent public activity from the GitHub API
+- Display activity in a readable format
+- Handle errors gracefully (invalid username, network issues, API failures)
+- Be implemented in **any programming language**
+- **Not use external libraries/frameworks** for the GitHub API request
 
 ---
 
 ## 🛠 Technical Details
 
-### CLI Usage Example
+### CLI Usage
 
 ```bash
 github-activity <username>
 ```
 
-Replace <username> with the GitHub username you want to inspect.
+# Exmple
 
-GitHub API Endpoint
+```bash
+github-activity octocat
+```
 
-To fetch events, use:
+---
 
+# GitHub API Endpoint
+
+The CLI should fetch data from the following endpoint:
+
+```bash
 https://api.github.com/users/<username>/events
+```
 
-Example:
+Replace <username> with the GitHub username provided via the CLI argument.
 
-https://api.github.com/users/kamranahmedse/events
+---
 
-This returns a list of recent public events the user has performed on GitHub.
+# 📋 Expected Output
 
-🧾 Output Expectations
+The output should summarize recent activity in a clear, readable format:
 
-Your CLI should parse the response and produce readable, informative messages like:
+```text
+Recent activity for GitHub user "octocat":
 
-Pushed 3 commits to kamranahmedse/developer-roadmap
-Opened a new issue in kamranahmedse/developer-roadmap
-Starred kamranahmedse/developer-roadmap
+- Pushed 3 commits to octocat/Hello-World
+- Opened a new issue in octocat/Hello-World
+- Starred microsoft/vscode
+- Created a new repository called "awesome-project"
+```
 
-The exact format is up to your implementation, so long as it’s clear and meaningful to the user.
+Output formatting is flexible, but each event should clearly describe what happened and where.
 
-💡 Bonus Enhancements (Optional)
+---
 
-Once the base functionality works, consider extending the tool with:
+# 🚦 Error Handling
 
-Filtering events by type (push, issue, star, etc.).
+Your CLI should handle the following cases:
 
-Display in structured formats (e.g., JSON, tables).
+Missing Username
 
-Caching responses to reduce API calls.
+```bash
+Error: No username provided.
+Usage: github-activity <username>
+```
 
-This isn’t required but can improve usability and performance.
+Invalid Username
 
-🚀 Why This Project Matters
+```bash
+Error: User "notarealuser123" not found.
+```
 
-This CLI project is not only a practical way to get hands-on with:
+API or Network Failure
 
-HTTP requests and REST APIs
+```bash
+Error: Unable to fetch data from GitHub API. Please try again later.
+```
 
-Terminal I/O
+---
 
-Parsing and formatting JSON
+# 🏁 Example Workflow
 
-Error handling in real-world scenarios
+```bash
+$ github-activity octocat
 
-…but also a solid portfolio piece showcasing backend and tooling skills.
+Recent activity for GitHub user "octocat":
+- Pushed 2 commits to octocat/Hello-World
+- Created issue #42 in octocat/Hello-World
+- Starred vercel/next.js
 
-📌 Notes
-
-You can implement this in Node.js, Python, Go, Rust, Shell script, or any language that supports HTTP requests.
-
-Keep the code clean, robust, and user-friendly.
-
-Include example screenshots or sample outputs in your GitHub README for best presentation.
+```

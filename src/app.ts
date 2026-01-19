@@ -7,64 +7,77 @@ const rl = createInterface({
 	output: process.stdout,
 });
 
+function formatTime(date: string): string {
+	const new_date = new Date(date);
+
+	return new_date.toLocaleString("en-GB", {
+		day: "2-digit",
+		month: "2-digit",
+		year: "numeric",
+		hour: "2-digit",
+		minute: "2-digit",
+		hour12: true,
+	});
+}
+
 function printOutput(events: any[]) {
 	const latest_date = new Date(events[0].created_at).toLocaleDateString("en-GB");
 	const oldest_date = new Date(events.at(-1).created_at).toLocaleDateString("en-GB");
 
 	console.log("--------------------------------------------------------------");
-	console.log(`Recent user activity from ${kleur.yellow(oldest_date)} - ${kleur.green(latest_date)}`);
-	console.log("");
+	console.log(`Recent user activity from ${kleur.green(oldest_date)} - ${kleur.green(latest_date)}`);
 
-	const pushEvents = new Map<string, number>();
-	const createEvents = new Map<string, string>();
+	console.log("");
+	console.log("");
 
 	for (let event of events) {
+		// PushEvent → source code changes
 		if (event.type === "PushEvent") {
-			const key: string = event.repo.name;
-			pushEvents.set(key, (pushEvents.get(key) ?? 0) + 1);
+			console.log(`Pushed a commit on ${kleur.yellow(event.repo.name)} at ${kleur.green(formatTime(event.created_at))}`);
 		}
+
+		//CreateEvent → branch / tag / repo created
 		if (event.type === "CreateEvent") {
-			const key: string = event.repo.name;
-			createEvents.set(key, event.payload.ref_type);
+			const refLabel = event.payload.ref ? `"${kleur.blue(event.payload.ref)}"` : "";
+
+			console.log(
+				`Created a ${event.payload.ref_type} ${refLabel} on ${kleur.yellow(event.repo.name)} at ${kleur.green(formatTime(event.created_at))}`,
+			);
 		}
+
+		// DeleteEvent → branch / tag deleted
 		if (event.type === "DeleteEvent") {
-			const key: string = event.repo.name;
-			createEvents.set(key, event.payload.ref_type);
+			const refLabel = event.payload.ref ? `"${kleur.red(event.payload.ref)}"` : "";
+			console.log(
+				`Deleted a ${event.payload.ref_type} ${refLabel} on ${kleur.yellow(event.repo.name)} at ${kleur.green(formatTime(event.created_at))})`,
+			);
 		}
-		if (event.type === "CreateEvent") {
-			const key: string = event.repo.name;
-			createEvents.set(key, event.payload.ref_type);
+
+		// PullRequestEvent → PR lifecycle activity
+		if (event.type === "PullRequestEvent") {
+			console.log(`Pull request ${event.payload.action} on ${kleur.yellow(event.repo.name)} at ${kleur.green(formatTime(event.created_at))}`);
 		}
-		if (event.type === "CreateEvent") {
-			const key: string = event.repo.name;
-			createEvents.set(key, event.payload.ref_type);
+
+		// IssuesEvent → issue opened / closed / reopened
+		if (event.type === "IssuesEvent") {
+			console.log(`Issue ${event.payload.action} on ${kleur.yellow(event.repo.name)} at ${kleur.green(formatTime(event.created_at))}`);
 		}
-	}
 
-	console.log(kleur.bgGreen("PUSH"));
-	for (let [repo, count] of pushEvents) {
-		console.log(`Push ${count} commits on ${repo}`);
-	}
+		// IssueCommentEvent → discussion activity
+		if (event.type === "IssueCommentEvent") {
+			console.log(
+				`Comment ${event.payload.action} on an issue in ${kleur.yellow(event.repo.name)} at ${kleur.green(formatTime(event.created_at))}`,
+			);
+		}
 
-	console.log("");
+		// ForkEvent → repository forked
+		if (event.type === "ForkEvent") {
+			console.log(`Forked ${kleur.yellow(event.repo.name)} at ${kleur.green(formatTime(event.created_at))}`);
+		}
 
-	console.log(kleur.bgGreen("CREATE"));
-	for (let [key, val] of createEvents) {
-		switch (val) {
-			case "repository":
-				console.log(`Created a repository ${key}`);
-				break;
-
-			case "branch":
-				console.log(`Created a branch ${key}`);
-				break;
-
-			case "tag":
-				console.log(`Created a tag ${key}`);
-				break;
-
-			default:
-				break;
+		// WatchEvent → repository starred
+		if (event.type === "WatchEvent") {
+			console.log(`Starred ${kleur.yellow(event.repo.name)} at ${kleur.green(formatTime(event.created_at))}`);
 		}
 	}
 }
@@ -79,7 +92,6 @@ function prompt() {
 		}
 
 		if (input.trim().length <= 0) {
-			console.clear();
 			console.log(kleur.red("No command input"));
 			prompt();
 
@@ -89,13 +101,11 @@ function prompt() {
 		const flags: string[] = input.trim().split(" ");
 
 		if (flags[0] !== "github-activity") {
-			console.clear();
 			console.log(kleur.red("Invalid flags"));
 			prompt();
 
 			return;
 		} else if (flags.length === 1) {
-			console.clear();
 			console.log(kleur.red("Missing 2nd flag"));
 			prompt();
 
@@ -106,10 +116,18 @@ function prompt() {
 
 		try {
 			const response = await fetch(`https://api.github.com/users/${username}/events`);
+
+			if (!response.ok) {
+				console.log(kleur.red("User not found"));
+				prompt();
+
+				return;
+			}
+
 			const data = await response.json();
 
-			if (data.statusCode === "404") {
-				console.log(kleur.red("User not found"));
+			if (!data || data.length <= 0) {
+				console.log(kleur.red("User has no recent activity"));
 				prompt();
 
 				return;
